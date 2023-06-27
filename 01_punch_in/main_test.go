@@ -6,7 +6,7 @@ import (
 )
 
 func TestUserPunchIn(t *testing.T) {
-	s := make(session)
+	s := make(Session)
 	u := User{id: 1}
 
 	// Verify that user is created and logged in
@@ -26,7 +26,7 @@ func TestUserPunchIn(t *testing.T) {
 }
 
 func TestUserDelete(t *testing.T) {
-	s := make(session)
+	s := make(Session)
 	u := User{id: 1}
 
 	// Log in the user
