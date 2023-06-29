@@ -9,15 +9,23 @@ import (
 
 var isForTest bool
 
-func init() {
-	flag.BoolVar(&isForTest, "isForTest", false, "isForTest flag(optional) for testing End to End TestCase")
-}
-
 // userId Unix time
 type Session map[int]int64
 
 type User struct {
 	id int
+}
+
+type TestSuit struct {
+	testSessionMaxCreate int
+	cycleNo              float32
+	user                 *User
+}
+
+func printInstruction() {
+	fmt.Println("\nWho is logging in( > 1) ?")
+	fmt.Println("Press -1 : Logged in userId list")
+	fmt.Println("Press 0 : Terminate program")
 }
 
 func (u User) create(s Session) error {
@@ -77,20 +85,50 @@ func (s Session) list() error {
 	return nil
 }
 
-func (s Session) prompt() error {
+func (tc *TestSuit) runEndToEnd() {
+
+	userPointer := (*tc).user
+
+	time.Sleep(4 * time.Duration(time.Second))
+	(*userPointer).id = tc.testSessionMaxCreate / 2
+
+	if (tc.testSessionMaxCreate - 2) == 0 {
+		tc.testSessionMaxCreate = 6
+		tc.cycleNo -= .5
+	} else {
+		tc.testSessionMaxCreate -= 2
+	}
+}
+
+func (s Session) prompt(testSessionMaxCreate int, cycleNo float32) error {
 
 	var u User
+	var tc TestSuit
 
-	fmt.Println("\nWho is logging in( > 1) ?")
-	fmt.Println("Press -1 : Logged in userId list")
-	fmt.Println("Press 0 : Terminate program")
-
-	_, err := fmt.Scanf("%d", &u.id)
-
-	if err != nil {
-		fmt.Println("Error reading input:", err)
-		return nil
+	if tc.cycleNo == 0 {
+		os.Exit(1)
 	}
+
+	if isForTest && tc.cycleNo != 0 {
+		// Prepare a test suit
+		tc = TestSuit{
+			testSessionMaxCreate: testSessionMaxCreate,
+			cycleNo:              cycleNo,
+			user:                 &u,
+		}
+		// Run End to End test case
+		tc.runEndToEnd()
+	} else {
+		printInstruction()
+		// read from user input
+		_, err := fmt.Scanf("%d", &u.id)
+
+		if err != nil {
+			fmt.Println("Error reading input:", err)
+			return nil
+		}
+	}
+	fmt.Println("=============", u)
 
 	switch u.id {
 	case -1:
@@ -103,8 +141,12 @@ func (s Session) prompt() error {
 		}
 	}
 	// Repeat Prompt
-	s.prompt()
+	s.prompt(tc.testSessionMaxCreate, cycleNo)
 	return nil
+}
+
+func init() {
+	flag.BoolVar(&isForTest, "isForTest", false, "isForTest flag(optional) for testing End to End TestCase")
 }
 
 func main() {
@@ -119,7 +161,7 @@ func main() {
 	fmt.Println("flag", isForTest)
 
 	s := make(Session)
-	if err := s.prompt(); err != nil {
+	if err := s.prompt(6, 1); err != nil {
 		fmt.Printf("s.prompt(): %v", err)
 	}
 }
