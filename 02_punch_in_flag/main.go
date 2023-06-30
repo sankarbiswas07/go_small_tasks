@@ -151,12 +151,13 @@ func init() {
 
 func main() {
 	flag.Parse()
+
 	// Check for errors during flag parsing
-	// if err := flag.ErrHelp; err != nil {
-	// 	fmt.Print(err)
-	// 	fmt.Fprintf(os.Stderr, "flag.Parse(): Error parsing flags: %v\n", err)
-	// 	os.Exit(1)
-	// }
+	if err := flag.ErrHelp; err != nil {
+		fmt.Fprintln(os.Stderr, "Error parsing flags:", err)
+		flag.Usage()
+		os.Exit(1)
+	}
 
 	fmt.Println("flag", isForTest)
 
