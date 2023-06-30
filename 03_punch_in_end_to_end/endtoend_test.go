@@ -3,20 +3,17 @@ package main
 import (
 	"testing"
 	"time"
+	"fmt"
 )
 
 // --------------------------------------
 // End to End TEST
 // --------------------------------------
+
+// userId Unix time
 type TableTest struct {
 	userId      int
 	loggedInFor int
-}
-
-func _secondPunch(s Session, u User, loggedInFor int) {
-	// Wait for 3 sec
-	time.Sleep(time.Duration(loggedInFor) * time.Second)
-	u.punchIn(s)
 }
 
 func TestEndToEnd(t *testing.T) {
@@ -44,11 +41,13 @@ func TestEndToEnd(t *testing.T) {
 	}
 	s := make(Session)
 
+
 	for _, tt := range tableTest {
 		u := User{id: tt.userId}
 		// Initiate first punch
 		u.punchIn(s)
-		_secondPunch(s, u, tt.loggedInFor)
+		fmt.Println(tt)
+		time.Sleep(time.Duration(tt.loggedInFor) * time.Second)
+		u.punchIn(s)
 	}
-
 }
