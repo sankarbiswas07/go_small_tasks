@@ -23,9 +23,11 @@ type TestSuit struct {
 }
 
 func printInstruction() {
-	fmt.Println("\nWho is logging in( > 1) ?")
+	fmt.Println("------------------------------------")
+	fmt.Println("Who is logging in( > 1) ?")
 	fmt.Println("Press -1 : Logged in userId list")
 	fmt.Println("Press 0 : Terminate program")
+	fmt.Println("------------------------------------")
 }
 
 func (u User) create(s Session) error {
@@ -87,10 +89,9 @@ func (s Session) list() error {
 
 func (tc *TestSuit) runEndToEnd() {
 
-	userPointer := (*tc).user
-
 	time.Sleep(4 * time.Duration(time.Second))
-	(*userPointer).id = tc.testSessionMaxCreate / 2
+	user := User{id: tc.testSessionMaxCreate / 2}
+	tc.user = &user
 
 	if (tc.testSessionMaxCreate - 2) == 0 {
 		tc.testSessionMaxCreate = 6
@@ -100,24 +101,16 @@ func (tc *TestSuit) runEndToEnd() {
 	}
 }
 
-func (s Session) prompt(testSessionMaxCreate int, cycleNo float32) error {
+func (s Session) prompt(tc *TestSuit) error {
 
 	var u User
-	var tc TestSuit
-
-	if tc.cycleNo == 0 {
-		os.Exit(1)
-	}
 
 	if isForTest && tc.cycleNo != 0 {
-		// Prepare a test suit
-		tc = TestSuit{
-			testSessionMaxCreate: testSessionMaxCreate,
-			cycleNo:              cycleNo,
-			user:                 &u,
-		}
 		// Run End to End test case
 		tc.runEndToEnd()
+		u = *tc.user // assign the point of the same user Struct
+	} else if isForTest && tc.cycleNo == 0 {
+		os.Exit(1) //c losing end to end test case
 	} else {
 		printInstruction()
 		// read from user input
@@ -128,7 +121,6 @@ func (s Session) prompt(testSessionMaxCreate int, cycleNo float32) error {
 			return nil
 		}
 	}
-	fmt.Println("=============", u)
 
 	switch u.id {
 	case -1:
@@ -140,29 +132,45 @@ func (s Session) prompt(testSessionMaxCreate int, cycleNo float32) error {
 			return fmt.Errorf("u.punchIs(S): %w", err)
 		}
 	}
+
 	// Repeat Prompt
-	s.prompt(tc.testSessionMaxCreate, cycleNo)
+	s.prompt(tc)
+
 	return nil
 }
 
 func init() {
-	flag.BoolVar(&isForTest, "isForTest", false, "isForTest flag(optional) for testing End to End TestCase")
+	flag.BoolVar(&isForTest, "isForTest", false, "isForTest[Bool] flag(optional) for testing End to End TestCase")
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s [flags]\n", os.Args[0])
+		flag.PrintDefaults()
+	}
+
+	// fmt.Println("reflect.TypeOf(isForTest) - ", reflect.TypeOf(isForTest))
+	fmt.Println("Value of isForTest -", isForTest)
 }
 
 func main() {
 	flag.Parse()
+	var tc TestSuit
 
 	// Check for errors during flag parsing
-	if err := flag.ErrHelp; err != nil {
-		fmt.Fprintln(os.Stderr, "Error parsing flags:", err)
+	if flag.NArg() > 0 {
+		fmt.Fprintf(os.Stderr, "Error: Unknown arguments\n")
 		flag.Usage()
 		os.Exit(1)
 	}
 
-	fmt.Println("flag", isForTest)
+	// If flag is enable make a test suit
+	if isForTest {
+		tc = TestSuit{
+			testSessionMaxCreate: 6,
+			cycleNo:              1,
+		}
+	}
 
 	s := make(Session)
-	if err := s.prompt(6, 1); err != nil {
+	if err := s.prompt(&tc); err != nil {
 		fmt.Printf("s.prompt(): %v", err)
 	}
 }
