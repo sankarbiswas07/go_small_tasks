@@ -71,3 +71,11 @@ No database/ file writing should not be used.
 
 - `func TestUserDelete(t *testing.T)` :
 	- Case 1: UserID delete form season map or not 
+
+## How To Run Test
+
+- For Unit test, run the command inside the project directory
+	- ```go test main_test.go main.go```
+
+- For End to end test, run the command inside the project directory
+	- ```go test```
